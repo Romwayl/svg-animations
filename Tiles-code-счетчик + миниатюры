@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Дартс - игра с историей бросков</title>
+    <title>Дартс - 5 бросков с историей</title>
     <script src="https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <style>
         body {
@@ -67,10 +67,24 @@
         }
         
         .score-display {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .throws-counter {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+        
+        .final-result {
+            font-size: 32px;
+            font-weight: bold;
             color: #4285f4;
+            margin: 20px 0;
+            display: none;
         }
         
         .buttons-container {
@@ -98,14 +112,6 @@
         
         #throw-button {
             background: linear-gradient(135deg, #4285f4, #34a853);
-            background-size: 200% 200%;
-            animation: gradient 3s ease infinite;
-        }
-        
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
         
         #throw-button:hover {
@@ -113,11 +119,19 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
         
+        #restart-button {
+            background: #f4b400;
+            display: none;
+        }
+        
+        #restart-button:hover {
+            background: #db9b00;
+        }
+        
         .title {
             color: #333;
             margin-bottom: 30px;
             font-size: 32px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         
         .bullseye-preview { border: 2px solid #34a853; }
@@ -126,10 +140,18 @@
 </head>
 <body>
     <div class="main-container">
-        <h1 class="title">🎯 Дартс - симулятор</h1>
+        <h1 class="title">🎯 Дартс - 5 бросков</h1>
         
         <div class="score-display" id="score">
-            Общий счёт: 0
+            Очки: 0
+        </div>
+        
+        <div class="throws-counter" id="throws-counter">
+            Бросков осталось: 5
+        </div>
+        
+        <div class="final-result" id="final-result">
+            Ваш результат: <span id="final-score">0</span> очков!
         </div>
         
         <div class="animation-wrapper">
@@ -211,6 +233,9 @@
             <button id="throw-button" class="dart-button">
                 Бросить дротик
             </button>
+            <button id="restart-button" class="dart-button">
+                Играть снова
+            </button>
         </div>
     </div>
 
@@ -228,11 +253,16 @@
         // Элементы
         const aimAnimation = document.getElementById('aim-animation');
         const throwButton = document.getElementById('throw-button');
+        const restartButton = document.getElementById('restart-button');
         const scoreDisplay = document.getElementById('score');
+        const throwsCounter = document.getElementById('throws-counter');
+        const finalResult = document.getElementById('final-result');
+        const finalScore = document.getElementById('final-score');
         const throwHistory = document.getElementById('throw-history');
 
         // Игровые переменные
         let totalScore = 0;
+        let throwsLeft = 5;
         let isThrowing = false;
 
         // Выбор случайной анимации
@@ -284,15 +314,53 @@
                     preview.addEventListener('complete', () => preview.pause());
                 });
             
-            // Ограничиваем историю 10 последними бросками
+            // Ограничиваем историю 5 последними бросками
             if (throwHistory.children.length > 10) {
+                throwHistory.removeChild(throwHistory.lastChild);
                 throwHistory.removeChild(throwHistory.lastChild);
             }
         }
 
+        // Обновление интерфейса
+        function updateUI() {
+            scoreDisplay.textContent = `Очки: ${totalScore}`;
+            throwsCounter.textContent = `Бросков осталось: ${throwsLeft}`;
+        }
+
+        // Завершение игры
+        function endGame() {
+            finalScore.textContent = totalScore;
+            finalResult.style.display = 'block';
+            throwButton.style.display = 'none';
+            restartButton.style.display = 'block';
+        }
+
+        // Начало новой игры
+        function startNewGame() {
+            // Очищаем историю
+            throwHistory.innerHTML = '';
+            
+            // Сбрасываем счет
+            totalScore = 0;
+            throwsLeft = 5;
+            updateUI();
+            finalResult.style.display = 'none';
+            throwButton.style.display = 'block';
+            restartButton.style.display = 'none';
+            
+            // Скрываем все анимации броска
+            document.querySelectorAll('.throw-animation').forEach(anim => {
+                anim.style.display = 'none';
+                anim.stop();
+            });
+            
+            // Показываем прицеливание
+            aimAnimation.style.display = 'block';
+        }
+
         // Обработчик броска
         throwButton.addEventListener('click', async () => {
-            if (isThrowing) return;
+            if (isThrowing || throwsLeft <= 0) return;
             isThrowing = true;
             
             // Блокируем кнопку
@@ -320,19 +388,33 @@
             
             // Обновляем счет
             totalScore += points;
-            scoreDisplay.textContent = `Общий счёт: ${totalScore}`;
+            throwsLeft--;
+            updateUI();
             
             // Добавляем в историю
             createThrowPreview(animId, points);
             
-            // Возвращаем прицеливание
-            setTimeout(() => {
-                throwAnim.style.display = 'none';
-                aimAnimation.style.display = 'block';
-                throwButton.disabled = false;
-                isThrowing = false;
-            }, 500);
+            // Проверяем окончание игры
+            if (throwsLeft <= 0) {
+                endGame();
+            } else {
+                // Возвращаем прицеливание
+                setTimeout(() => {
+                    throwAnim.style.display = 'none';
+                    aimAnimation.style.display = 'block';
+                }, 500);
+            }
+            
+            // Разблокируем кнопку
+            throwButton.disabled = false;
+            isThrowing = false;
         });
+
+        // Обработчик кнопки "Играть снова"
+        restartButton.addEventListener('click', startNewGame);
+
+        // Инициализация игры
+        startNewGame();
     </script>
 </body>
 </html>
