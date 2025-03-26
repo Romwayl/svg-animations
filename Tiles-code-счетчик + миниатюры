@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Дартс - игра с историей бросков</title>
+    <script src="https://cdn.jsdelivr.net/npm/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            text-align: center;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        .animation-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+        }
+        
+        .throw-history {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 120px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .throw-preview {
+            width: 60px;
+            height: 60px;
+            transition: all 0.3s ease;
+        }
+        
+        .points-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: -8px;
+            font-weight: bold;
+        }
+        
+        lottie-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .score-display {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #4285f4;
+        }
+        
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .dart-button {
+            padding: 14px 28px;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            text-align: center;
+        }
+        
+        #throw-button {
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        #throw-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .title {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 32px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .bullseye-preview { border: 2px solid #34a853; }
+        .miss-preview { opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1 class="title">🎯 Дартс - симулятор</h1>
+        
+        <div class="score-display" id="score">
+            Общий счёт: 0
+        </div>
+        
+        <div class="animation-wrapper">
+            <!-- Анимация прицеливания -->
+            <lottie-player 
+                id="aim-animation"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-aimloop.json"
+                background="transparent"
+                speed="1"
+                loop
+                autoplay>
+            </lottie-player>
+            
+            <!-- Анимации броска -->
+            <lottie-player 
+                class="throw-animation"
+                data-id="miss"
+                data-points="0"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-miss-2.json"
+                background="transparent"
+                speed="1"
+                style="display: none;">
+            </lottie-player>
+            
+            <lottie-player 
+                class="throw-animation"
+                data-id="bullseye"
+                data-points="10"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-bullseye.json"
+                background="transparent"
+                speed="1"
+                style="display: none;">
+            </lottie-player>
+            
+            <lottie-player 
+                class="throw-animation"
+                data-id="score2"
+                data-points="5"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-2.json"
+                background="transparent"
+                speed="1"
+                style="display: none;">
+            </lottie-player>
+            
+            <lottie-player 
+                class="throw-animation"
+                data-id="score3"
+                data-points="4"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-3.json"
+                background="transparent"
+                speed="1"
+                style="display: none;">
+            </lottie-player>
+            
+            <lottie-player 
+                class="throw-animation"
+                data-id="score4"
+                data-points="2"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-4.json"
+                background="transparent"
+                speed="1"
+                style="display: none;">
+            </lottie-player>
+            
+            <lottie-player 
+                class="throw-animation"
+                data-id="score5"
+                data-points="1"
+                src="https://cdn.jsdelivr.net/gh/Romwayl/svg-animations@main/darts-v4-5.json"
+                background="transparent"
+                speed="1"
+                style="display: none;">
+            </lottie-player>
+        </div>
+        
+        <div class="throw-history" id="throw-history"></div>
+        
+        <div class="buttons-container">
+            <button id="throw-button" class="dart-button">
+                Бросить дротик
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Настройки вероятностей
+        const probabilities = {
+            'miss': 0.25,     // 25% chance (0 очков)
+            'bullseye': 0.1,  // 10% chance (10 очков)
+            'score2': 0.15,   // 15% chance (5 очков)
+            'score3': 0.2,    // 20% chance (4 очка)
+            'score4': 0.2,    // 20% chance (2 очка)
+            'score5': 0.1     // 10% chance (1 очко)
+        };
+
+        // Элементы
+        const aimAnimation = document.getElementById('aim-animation');
+        const throwButton = document.getElementById('throw-button');
+        const scoreDisplay = document.getElementById('score');
+        const throwHistory = document.getElementById('throw-history');
+
+        // Игровые переменные
+        let totalScore = 0;
+        let isThrowing = false;
+
+        // Выбор случайной анимации
+        function getRandomAnimation() {
+            const random = Math.random();
+            let cumulativeProbability = 0;
+            
+            for (const [id, prob] of Object.entries(probabilities)) {
+                cumulativeProbability += prob;
+                if (random <= cumulativeProbability) {
+                    return id;
+                }
+            }
+            return 'miss';
+        }
+
+        // Создание миниатюры броска
+        function createThrowPreview(animId, points) {
+            const previewContainer = document.createElement('div');
+            previewContainer.style.display = 'flex';
+            previewContainer.style.flexDirection = 'column';
+            previewContainer.style.alignItems = 'center';
+            
+            const preview = document.createElement('lottie-player');
+            preview.className = `throw-preview ${animId}-preview`;
+            preview.setAttribute('background', 'transparent');
+            preview.setAttribute('speed', '1');
+            preview.setAttribute('loop', 'false');
+            
+            // Особые стили для разных результатов
+            if (animId === 'bullseye') preview.classList.add('bullseye-preview');
+            if (animId === 'miss') preview.classList.add('miss-preview');
+            
+            const pointsLabel = document.createElement('div');
+            pointsLabel.className = 'points-label';
+            pointsLabel.textContent = points > 0 ? `+${points} 🎯` : 'Промах';
+            pointsLabel.style.color = points > 0 ? '#34a853' : '#ea4335';
+            
+            previewContainer.appendChild(preview);
+            previewContainer.appendChild(pointsLabel);
+            
+            // Добавляем в историю
+            throwHistory.prepend(previewContainer);
+            
+            // Загружаем и запускаем анимацию
+            preview.load(document.querySelector(`.throw-animation[data-id="${animId}"]`).src)
+                .then(() => {
+                    preview.play();
+                    preview.addEventListener('complete', () => preview.pause());
+                });
+            
+            // Ограничиваем историю 10 последними бросками
+            if (throwHistory.children.length > 10) {
+                throwHistory.removeChild(throwHistory.lastChild);
+            }
+        }
+
+        // Обработчик броска
+        throwButton.addEventListener('click', async () => {
+            if (isThrowing) return;
+            isThrowing = true;
+            
+            // Блокируем кнопку
+            throwButton.disabled = true;
+            
+            // Скрываем прицеливание
+            aimAnimation.style.display = 'none';
+            
+            // Выбираем случайную анимацию
+            const animId = getRandomAnimation();
+            const throwAnim = document.querySelector(`.throw-animation[data-id="${animId}"]`);
+            const points = parseInt(throwAnim.dataset.points);
+            
+            // Показываем анимацию броска
+            throwAnim.style.display = 'block';
+            throwAnim.play();
+            
+            // Ждем завершения анимации
+            await new Promise(resolve => {
+                throwAnim.addEventListener('complete', () => {
+                    throwAnim.pause();
+                    resolve();
+                }, { once: true });
+            });
+            
+            // Обновляем счет
+            totalScore += points;
+            scoreDisplay.textContent = `Общий счёт: ${totalScore}`;
+            
+            // Добавляем в историю
+            createThrowPreview(animId, points);
+            
+            // Возвращаем прицеливание
+            setTimeout(() => {
+                throwAnim.style.display = 'none';
+                aimAnimation.style.display = 'block';
+                throwButton.disabled = false;
+                isThrowing = false;
+            }, 500);
+        });
+    </script>
+</body>
+</html>
